@@ -1,0 +1,51 @@
+import telebot
+from telebot import types
+import random
+from PIL import Image
+from pytesseract import pytesseract
+
+bot = telebot.TeleBot('5636117607:AAEppzCvhx5JvGLtvXCMZSPlxZwWbjBd414')
+
+@bot.message_handler(commands=['start'])
+def start(message):
+  markup = types.ReplyKeyboardMarkup(resize_keyboard = True)
+  item1 = types.KeyboardButton('Frukt')
+  item2 = types.KeyboardButton('Zhivotnoe')
+  item3 = types.KeyboardButton('Strana')
+
+  frukt = ['Banan', 'Grysha', 'Persik']
+  zhivotnoe = ['Enot', 'Volk', 'Lisa']
+  strana = ['Avstria', 'Italia', 'Kanada']
+
+  markup.add(item1, item2, item3)
+
+  bot.send_message(message.chat.id, 'Wagwan!')
+  bot.send_sticker(message.chat.id, 'CAACAgIAAxkBAAEGYx1jbpok1bbGKAq8KdjDg3m4l3tQqQACig0AAsE2eUrJdmKGDnBxfisE'. format(message.from_user), reply_markup = markup)
+ 
+  @bot.message_handler(content_types=['text'])
+  def bot_message(message):
+    if message.text == 'Frukt':
+          bot.send_message(message.chat.id, random.choice(frukt))
+    if message.text == 'Zhivotnoe':
+          bot.send_message(message.chat.id, random.choice(zhivotnoe))
+    if message.text == 'Strana':
+          bot.send_message(message.chat.id, random.choice(strana))
+
+@bot.message_handler(content_types=['photo'])
+def handle_docs_photo(message):
+   mm = types.ReplyKeyboardMarkup(row_width=2,resize_keyboard=True)
+   file_info = bot.get_file(message.photo[len(message.photo) -1].file_id)
+   downloaded_file = bot.download_file(file_info.file_path)
+   src = '' + file_info.file_path
+   with open(src, 'wb') as new_file:
+       new_file.write(downloaded_file)
+       
+   image = Image.open(file_info.file_path)
+   image = image.resize((400, 200))
+   image.save('sample.png')
+   path_to_tesseract = r"C:\Program Files\TesseractOCR\tesseract.exe"
+   pytesseract.tesseract_cmd = path_to_tesseract
+   text = pytesseract.image_to_string(image)
+   bot.send_message(message.from_user.id, text[:-1])
+
+bot.polling(none_stop = True)
